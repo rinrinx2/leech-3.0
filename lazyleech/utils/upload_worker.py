@@ -234,7 +234,7 @@ async def progress_callback(current, total, client, reply, filename, user_id):
             upload_speed = format_bytes((total - current) / (time.time() - start_time))
         else:
             upload_speed = '0 B'
-        text = f'''Uploading {html.escape(filename)}...
+        text = f'''📤 Uploading: {html.escape(filename)}
 <code>{html.escape(return_progress_string(current, total))}</code>
 
 <b>📦 Size :</b> <code>{format_bytes(total)}</code>
