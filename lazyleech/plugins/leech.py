@@ -52,14 +52,11 @@ async def torrent_cmd(client, message):
                         link = reply.text or reply.caption
     if not link:
         await message.reply_text('''Usage:
-- /torrent <i>&lt;Torrent URL or File&gt;</i>
-- /torrent <i>(as reply to a Torrent URL or file)</i>
+- <code>/torrent</code> <i>(as reply to a Torrent URL or file)</i>
 
-- /ziptorrent <i>&lt;Torrent URL or File&gt;</i>
-- /ziptorrent <i>(as reply to a Torrent URL or File)</i>
+- <code>/ziptorrent</code> <i>(as reply to a Torrent URL or File)</i>
 
-- /filetorrent <i>&lt;Torrent URL or File&gt;</i> - Sends videos as files
-- /filetorrent <i>(as reply to a Torrent URL or file)</i> - Sends videos as files''')
+- <code>/filetorrent</code> <i>(as reply to a Torrent URL or file)</i> - Sends videos as files''')
         return
     await initiate_torrent(client, message, link, flags)
     await message.stop_propagation()
@@ -95,14 +92,11 @@ async def magnet_cmd(client, message):
         link = reply.text or reply.caption
     if not link:
         await message.reply_text('''Usage:
-- /magnet <i>&lt;Magnet URL&gt;</i>
-- /magnet <i>(as reply to a Magnet URL)</i>
+- <code>/magnet</code> <i>(as reply to a Magnet URL)</i>
 
-- /zipmagnet <i>&lt;Magnet URL&gt;</i>
-- /zipmagnet <i>(as reply to a Magnet URL)</i>
+- <code>/zipmagnet</code> <i>(as reply to a Magnet URL)</i>
 
-- /filemagnet <i>&lt;Magnet URL&gt;</i> - Sends videos as files
-- /filemagnet <i>(as reply to a Magnet URL)</i> - Sends videos as files''')
+- <code>/filemagnet</code> <i>(as reply to a Magnet URL)</i> - Sends videos as files''')
         return
     await initiate_magnet(client, message, link, flags)
 
@@ -136,20 +130,14 @@ async def directdl_cmd(client, message):
         link = reply.text
     if not link:
         await message.reply_text('''Usage:
-- /directdl <i>&lt;Direct URL&gt; | optional custom file name</i>
-- /directdl <i>(as reply to a Direct URL) | optional custom file name</i>
-- /direct <i>&lt;Direct URL&gt; | optional custom file name</i>
-- /direct <i>(as reply to a Direct URL) | optional custom file name</i>
+- <code>/directdl</code> <i>(as reply to a Direct URL) | optional custom file name</i>
+- <code>/direct</code> <i>(as reply to a Direct URL) | optional custom file name</i>
 
-- /zipdirectdl <i>&lt;Direct URL&gt; | optional custom file name</i>
-- /zipdirectdl <i>(as reply to a Direct URL) | optional custom file name</i>
-- /zipdirect <i>&lt;Direct URL&gt; | optional custom file name</i>
-- /zipdirect <i>(as reply to a Direct URL) | optional custom file name</i>
+- <code>/zipdirectdl</code> <i>(as reply to a Direct URL) | optional custom file name</i>
+- <code>/zipdirect</code> <i>(as reply to a Direct URL) | optional custom file name</i>
 
-- /filedirectdl <i>&lt;Direct URL&gt; | optional custom file name</i> - Sends videos as files
-- /filedirectdl <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files
-- /filedirect <i>&lt;Direct URL&gt; | optional custom file name</i> - Sends videos as files
-- /filedirect <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files''')
+- <code>/filedirectdl</code> <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files
+- <code>/filedirect</code> <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files''')
         return
     split = link.split('|', 1)
     if len(split) > 1:
@@ -214,7 +202,7 @@ async def handle_leech(client, message, gid, reply, user_id, flags):
             tor_name = os.path.basename(torrent_info['files'][0]['path'])
             if not tor_name:
                 tor_name = urldecode(os.path.basename(urlparse(torrent_info['files'][0]['uris'][0]['uri']).path))
-        text = f'''{html.escape(tor_name)}
+        text = f'''📥 Downloading: {html.escape(tor_name)}
 <code>{html.escape(return_progress_string(completed_length, total_length))}</code>
 
 <b>🔍 Status:</b> {status}
@@ -222,7 +210,7 @@ async def handle_leech(client, message, gid, reply, user_id, flags):
 <b>📥 Downloaded:</b> {formatted_completed_length}
 <b>⚡ Speed:</b> {download_speed}
 <b>⏱ ETA:</b> {calculate_eta(completed_length, total_length, start_time)}
-<b>❌ Cancel:</b> <code>/cancel {gid}</code>'''
+<b>❌ Cancel:</b> <code>/cancelleech {gid}</code>'''
         if seeders is not None:
             text += f'\n<b>🌱 Seeders:</b> {seeders}'
         if peers is not None:
@@ -244,14 +232,14 @@ async def handle_leech(client, message, gid, reply, user_id, flags):
         )
     elif torrent_info['status'] == 'removed':
         await asyncio.gather(
-            message.reply_text('Your download has been manually cancelled.'),
+            message.reply_text('❌ Your download has been manually cancelled.'),
             reply.delete()
         )
     else:
         leech_statuses.pop(message_identifier)
         task = None
         if upload_queue._unfinished_tasks:
-            task = asyncio.create_task(reply.edit_text('Download successful, waiting for queue...'))
+            task = asyncio.create_task(reply.edit_text('✅ Download successful.\n⏸ waiting for queue...'))
         upload_queue.put_nowait((client, message, reply, torrent_info, user_id, flags))
         try:
             await aria2_remove(session, gid)
@@ -262,7 +250,7 @@ async def handle_leech(client, message, gid, reply, user_id, flags):
             if task:
                 await task
 
-@Client.on_message(filters.command('list') & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command('listleech') & filters.chat(ALL_CHATS))
 async def list_leeches(client, message):
     user_id = message.from_user.id
     text = ''
@@ -291,7 +279,7 @@ async def list_leeches(client, message):
         text = 'No leeches by you found.'
     await message.reply_text(text, quote=quote)
 
-@Client.on_message(filters.command('cancel') & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command('cancelleech') & filters.chat(ALL_CHATS))
 async def cancel_leech(client, message):
     user_id = message.from_user.id
     gid = None
@@ -329,8 +317,7 @@ async def cancel_leech(client, message):
         gid = leech_statuses.get(reply_identifier)
     if not gid:
         await message.reply_text('''Usage:
-/cancel <i>&lt;GID&gt;</i>
-/cancel <i>(as reply to status message)</i>''')
+<code>/cancel</code> <i>(as reply to status message)</i>''')
         return
     if message.chat.id not in ADMIN_CHATS and not is_gid_owner(user_id, gid):
         await message.reply_text('You did not start this leech.')
@@ -338,40 +325,27 @@ async def cancel_leech(client, message):
     await aria2_remove(session, gid)
 
 help_dict['leech'] = ('Leech',
-'''/torrent <i>&lt;Torrent URL or File&gt;</i>
-/torrent <i>(as reply to a Torrent URL or file)</i>
+'''<code>/torrent</code> <i>(as reply to a Torrent URL or file)</i>
 
-/ziptorrent <i>&lt;Torrent URL or File&gt;</i>
-/ziptorrent <i>(as reply to a Torrent URL or File)</i>
+<code>/ziptorrent</code> <i>(as reply to a Torrent URL or File)</i>
 
-/filetorrent <i>&lt;Torrent URL or File&gt;</i> - Sends videos as files
-/filetorrent <i>(as reply to a Torrent URL or File)</i> - Sends videos as files
+<code>/filetorrent</code> <i>(as reply to a Torrent URL or File)</i> - Sends videos as files
 
-/magnet <i>&lt;Magnet URL&gt;</i>
-/magnet <i>(as reply to a Magnet URL)</i>
+<code>/magnet</code> <i>(as reply to a Magnet URL)</i>
 
-/zipmagnet <i>&lt;Magnet URL&gt;</i>
-/zipmagnet <i>(as reply to a Magnet URL)</i>
+<code>/zipmagnet</code> <i>(as reply to a Magnet URL)</i>
 
-/filemagnet <i>&lt;Magnet URL&gt;</i> - Sends videos as files
-/filemagnet <i>(as reply to a Magnet URL)</i> - Sends videos as files
+<code>/filemagnet</code> <i>(as reply to a Magnet URL)</i> - Sends videos as files
 
-/directdl <i>&lt;Direct URL&gt; | optional custom file name</i>
-/directdl <i>(as reply to a Direct URL) | optional custom file name</i>
-/direct <i>&lt;Direct URL&gt; | optional custom file name</i>
-/direct <i>(as reply to a Direct URL) | optional custom file name</i>
+<code>/directdl</code> <i>(as reply to a Direct URL) | optional custom file name</i>
+<code>/direct</code> <i>(as reply to a Direct URL) | optional custom file name</i>
 
-/zipdirectdl <i>&lt;Direct URL&gt; | optional custom file name</i>
-/zipdirectdl <i>(as reply to a Direct URL) | optional custom file name</i>
-/zipdirect <i>&lt;Direct URL&gt; | optional custom file name</i>
-/zipdirect <i>(as reply to a Direct URL) | optional custom file name</i>
+<code>/zipdirectdl</code> <i>(as reply to a Direct URL) | optional custom file name</i>
+<code>/zipdirect</code> <i>(as reply to a Direct URL) | optional custom file name</i>
 
-/filedirectdl <i>&lt;Direct URL&gt; | optional custom file name</i> - Sends videos as files
-/filedirectdl <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files
-/filedirect <i>&lt;Direct URL&gt; | optional custom file name</i> - Sends videos as files
-/filedirect <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files
+<code>/filedirectdl</code> <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files
+<code>/filedirect</code> <i>(as reply to a Direct URL) | optional custom file name</i> - Sends videos as files
 
-/cancel <i>&lt;GID&gt;</i>
-/cancel <i>(as reply to status message)</i>
+<code>/cancelleech</code> <i>(as reply to status message)</i>
 
-/list - Lists YOUR leeches''')
+<code>/listleech</code> - Lists YOUR leeches''')

@@ -81,7 +81,7 @@ def return_progress_string(current, total):
         filled_length = int(10 * current // total)
     else:
         filled_length = 0
-    return '\n[' + '★' * filled_length + '☆' * (10 - filled_length) + ']'
+    return '\n☁' + '★' * filled_length + '☆' * (10 - filled_length) + '☁'
 
 # https://stackoverflow.com/a/852718
 # https://stackoverflow.com/a/775095

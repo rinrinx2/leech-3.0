@@ -55,14 +55,14 @@ async def return_search(query, page=1, sukebei=False):
 
 message_info = dict()
 ignore = set()
-@Client.on_message(filters.command(['ts', 'nyaa', 'nyaasi']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['ts']) & filters.chat(ALL_CHATS))
 async def nyaa_search(client, message):
     text = message.text.split(' ')
     text.pop(0)
     query = ' '.join(text)
     await init_search(client, message, query, False)
 
-@Client.on_message(filters.command(['sts', 'sukebei']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['sts']) & filters.chat(ALL_CHATS))
 async def nyaa_search_sukebei(client, message):
     text = message.text.split(' ')
     text.pop(0)
@@ -132,9 +132,6 @@ async def nyaa_callback(client, callback_query):
     await callback_query.answer()
 
 help_dict['nyaa'] = ('Nyaa.si',
-'''/ts <i>[search query]</i>
-/nyaa <i>[search query]</i>
-/nyaasi <i>[search query]</i>
+'''<code>/ts</code> <i>[search query]</i>
 
-/sts <i>[search query]</i>
-/sukebei <i>[search query]</i>''')
+<code>/sts</code> <i>[search query]</i>''')

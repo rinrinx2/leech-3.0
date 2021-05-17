@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from .. import ALL_CHATS, help_dict
 from ..utils.misc import get_file_mimetype, watermark_photo
 
-@Client.on_message(filters.command(['watermark', 'savewatermark', 'setwatermark']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['setwatermark']) & filters.chat(ALL_CHATS))
 async def savewatermark(client, message):
     reply = message.reply_to_message
     document = message.document
@@ -51,7 +51,7 @@ async def savewatermark(client, message):
     else:
         await message.reply_text('❌ Cannot find watermark')
 
-@Client.on_message(filters.command(['clearwatermark', 'rmwatermark', 'delwatermark', 'removewatermark', 'deletewatermark']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['removewatermark']) & filters.chat(ALL_CHATS))
 async def rmwatermark(client, message):
     for path in ('watermark', 'watermarked_thumbnail'):
         path = os.path.join(str(message.from_user.id), f'{path}.jpg')
@@ -74,14 +74,10 @@ async def testwatermark(client, message):
         await message.reply_photo(to_upload)
 
 help_dict['watermark'] = ('Watermark',
-'''/watermark <i>&lt;as reply to image or as a caption&gt;</i>
-/setwatermark <i>&lt;as reply to image or as a caption&gt;</i>
-/savewatermark <i>&lt;as reply to image or as a caption&gt;</i>
+'''<bold>Set watermark<\bold>
+<code>/setwatermark<\code> <i>&lt;as reply to image or as a caption&gt;</i>
 
-/clearwatermark
-/rmwatermark
-/removewatermark
-/delwatermark
-/deletewatermark
+<bold>Delete watermark<\bold>
+<code>/removewatermark</code>
 
-/testwatermark''')
+<code>/testwatermark</code>''')
