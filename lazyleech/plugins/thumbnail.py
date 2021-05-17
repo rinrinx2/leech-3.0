@@ -50,8 +50,8 @@ async def rmthumbnail(client, message):
     await message.reply_text('🗑 Thumbnail cleared')
 
 help_dict['thumbnail'] = ('Thumbnail',
-'''<bold>Set Thumbnail<\bold>
+'''<b>Set Thumbnail</b>
 <code>/thumbnail</code> <i>&lt;as reply to image or as a caption&gt;</i>
 
-<bold>Remove Thumbnail<\bold>
+<b>Remove Thumbnail</b>
 <code>/removethumbnail</code>''')

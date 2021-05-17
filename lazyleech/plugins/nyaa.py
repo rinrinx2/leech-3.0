@@ -132,6 +132,8 @@ async def nyaa_callback(client, callback_query):
     await callback_query.answer()
 
 help_dict['nyaa'] = ('Nyaa.si',
-'''<code>/ts</code> <i>[search query]</i>
+'''<b>Nyaa search</b>
+<code>/ts</code> <i>[search query]</i>
 
+<b>Sukebei search search</b>
 <code>/sts</code> <i>[search query]</i>''')
