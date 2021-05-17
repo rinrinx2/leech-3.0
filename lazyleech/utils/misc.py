@@ -87,7 +87,7 @@ def return_progress_string(current, total):
 # https://stackoverflow.com/a/775095
 def calculate_eta(current, total, start_time):
     if not current:
-        return '00:00:00'
+        return '00H:00M:00S'
     end_time = time.time()
     elapsed_time = end_time - start_time
     seconds = (elapsed_time * (total / current)) - elapsed_time

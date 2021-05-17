@@ -15,11 +15,11 @@ async def main():
                 await upload_worker()
             except Exception as ex:
                 preserved_logs.append(ex)
-                logging.exception('upload worker commited suicide')
+                logging.exception('Upload worker commited suicide')
                 tb = traceback.format_exc()
                 for i in ADMIN_CHATS:
                     try:
-                        await app.send_message(i, 'upload worker commited suicide')
+                        await app.send_message(i, '☠ Upload worker commited suicide')
                         await app.send_message(i, tb, parse_mode=None)
                     except Exception:
                         logging.exception('failed %s', i)

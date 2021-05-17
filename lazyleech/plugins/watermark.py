@@ -59,7 +59,7 @@ async def rmwatermark(client, message):
             os.remove(path)
     await message.reply_text('🗑 Watermark cleared')
 
-@Client.on_message(filters.command('testwatermark') & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command('') & filters.chat(ALL_CHATS))
 async def testwatermark(client, message):
     watermark = os.path.join(str(message.from_user.id), 'watermark.jpg')
     if not os.path.isfile(watermark):
@@ -75,9 +75,7 @@ async def testwatermark(client, message):
 
 help_dict['watermark'] = ('Watermark',
 '''<b>Set watermark</b>
-<code>/setwatermark<\code> <i>&lt;as reply to image or as a caption&gt;</i>
+<code>/setwatermark</code>
 
 <b>Delete watermark</b>
-<code>/removewatermark</code>
-
-<code>/testwatermark</code>''')
+<code>/removewatermark</code>''')

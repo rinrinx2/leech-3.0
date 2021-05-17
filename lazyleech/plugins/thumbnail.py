@@ -51,7 +51,7 @@ async def rmthumbnail(client, message):
 
 help_dict['thumbnail'] = ('Thumbnail',
 '''<b>Set Thumbnail</b>
-<code>/thumbnail</code> <i>&lt;as reply to image or as a caption&gt;</i>
+<code>/thumbnail</code>
 
 <b>Remove Thumbnail</b>
 <code>/removethumbnail</code>''')

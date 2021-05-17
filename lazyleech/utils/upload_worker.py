@@ -69,8 +69,8 @@ async def _upload_worker(client, message, reply, torrent_info, user_id, flags):
                 with zipfile.ZipFile(filepath, 'x') as zipf:
                     for file in torrent_info['files']:
                         zipf.write(file['path'], file['path'].replace(os.path.join(torrent_info['dir'], ''), '', 1))
-            await asyncio.gather(reply.edit_text('✅ done\n🔐 zip files...'), client.loop.run_in_executor(None, _zip_files))
-            asyncio.create_task(reply.edit_text('✅ done\n📤 upload file...'))
+            await asyncio.gather(reply.edit_text('✅ done\n🔐 Zip files...'), client.loop.run_in_executor(None, _zip_files))
+            asyncio.create_task(reply.edit_text('✅ done\n📤 Upload file...'))
             files[filepath] = filename
         else:
             for file in torrent_info['files']:
@@ -117,7 +117,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
     user_watermark = os.path.join(str(user_id), 'watermark.jpg')
     user_watermarked_thumbnail = os.path.join(str(user_id), 'watermarked_thumbnail.jpg')
     file_has_big = os.path.getsize(filepath) > 2097152000
-    upload_wait = await reply.reply_text(f'🔁 upload: {html.escape(filename)}\n\nwill started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
+    upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\nwill started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
     upload_identifier = (upload_wait.chat.id, upload_wait.message_id)
     async with upload_tamper_lock:
         upload_waits[upload_identifier] = user_id, worker_identifier
@@ -153,7 +153,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
                     if a:
                         async with upload_tamper_lock:
                             upload_waits.pop(upload_identifier)
-                            upload_wait = await reply.reply_text(f'🔁 upload: {html.escape(filename)}\n\nwill started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
+                            upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\nwill started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
                             upload_identifier = (upload_wait.chat.id, upload_wait.message_id)
                             upload_waits[upload_identifier] = user_id, worker_identifier
                         for _ in range(PROGRESS_UPDATE_DELAY):
