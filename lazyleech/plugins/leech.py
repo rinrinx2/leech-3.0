@@ -67,7 +67,7 @@ async def initiate_torrent(client, message, link, flags):
     try:
         gid = await aria2_add_torrent(session, user_id, link, LEECH_TIMEOUT)
     except Aria2Error as ex:
-        await asyncio.gather(message.reply_text(f'Aria2 Error Occured!\n{ex.error_code}: {html.escape(ex.error_message)}'), reply.delete())
+        await asyncio.gather(message.reply_text(f'❌ Aria2 Error Occured!\n{ex.error_code}: {html.escape(ex.error_message)}'), reply.delete())
         return
     finally:
         if os.path.isfile(link):
@@ -106,9 +106,9 @@ async def initiate_magnet(client, message, link, flags):
     try:
         gid = await asyncio.wait_for(aria2_add_magnet(session, user_id, link, LEECH_TIMEOUT), MAGNET_TIMEOUT)
     except Aria2Error as ex:
-        await asyncio.gather(message.reply_text(f'Aria2 Error Occured!\n{ex.error_code}: {html.escape(ex.error_message)}'), reply.delete())
+        await asyncio.gather(message.reply_text(f'❌ Aria2 Error Occured!\n{ex.error_code}: {html.escape(ex.error_message)}'), reply.delete())
     except asyncio.TimeoutError:
-        await asyncio.gather(message.reply_text('Magnet timed out'), reply.delete())
+        await asyncio.gather(message.reply_text('❌ Magnet timed out'), reply.delete())
     else:
         await handle_leech(client, message, gid, reply, user_id, flags)
 
@@ -156,7 +156,7 @@ async def directdl_cmd(client, message):
     if not parsed[0]:
         parsed[0] = 'https'
     if parsed[0] not in ('http', 'https'):
-        await message.reply_text('Invalid scheme')
+        await message.reply_text('❌ Invalid scheme')
         return
     link = urlunparse(parsed)
     await initiate_directdl(client, message, link, filename, flags)
@@ -167,9 +167,9 @@ async def initiate_directdl(client, message, link, filename, flags):
     try:
         gid = await asyncio.wait_for(aria2_add_directdl(session, user_id, link, filename, LEECH_TIMEOUT), MAGNET_TIMEOUT)
     except Aria2Error as ex:
-        await asyncio.gather(message.reply_text(f'Aria2 Error Occured!\n{ex.error_code}: {html.escape(ex.error_message)}'), reply.delete())
+        await asyncio.gather(message.reply_text(f'❌ Aria2 Error Occured!\n{ex.error_code}: {html.escape(ex.error_message)}'), reply.delete())
     except asyncio.TimeoutError:
-        await asyncio.gather(message.reply_text('Connection timed out'), reply.delete())
+        await asyncio.gather(message.reply_text('❌ Connection timed out'), reply.delete())
     else:
         await handle_leech(client, message, gid, reply, user_id, flags)
 
@@ -223,9 +223,9 @@ async def handle_leech(client, message, gid, reply, user_id, flags):
     if torrent_info['status'] == 'error':
         error_code = torrent_info['errorCode']
         error_message = torrent_info['errorMessage']
-        text = f'Aria2 Error Occured!\n{error_code}: {html.escape(error_message)}'
+        text = f'❌ Aria2 Error Occured!\n{error_code}: {html.escape(error_message)}'
         if error_code == '7' and not error_message and torrent_info['downloadSpeed'] == '0':
-            text += '\n\nThis error may have been caused due to the torrent being too slow'
+            text += '\n\n🥺 This error may have been caused due to the torrent being too slow'
         await asyncio.gather(
             message.reply_text(text),
             reply.delete()
@@ -244,7 +244,7 @@ async def handle_leech(client, message, gid, reply, user_id, flags):
         try:
             await aria2_remove(session, gid)
         except Aria2Error as ex:
-            if not (ex.error_code == 1 and ex.error_message == f'Active Download not found for GID#{gid}'):
+            if not (ex.error_code == 1 and ex.error_message == f'❌ Active Download not found for GID#{gid}'):
                 raise
         finally:
             if task:
@@ -276,7 +276,7 @@ async def list_leeches(client, message):
                 futtext = a
             text = futtext
     if not text:
-        text = 'No leeches by you found.'
+        text = '🤷‍♂️ No leeches by you found.'
     await message.reply_text(text, quote=quote)
 
 @Client.on_message(filters.command('cancelleech') & filters.chat(ALL_CHATS))
@@ -294,25 +294,25 @@ async def cancel_leech(client, message):
         if task:
             task, starter_id = task
             if message.chat.id not in ADMIN_CHATS and user_id != starter_id:
-                await message.reply_text('You did not start this leech.')
+                await message.reply_text('😅 You did not start this leech.')
             else:
                 task.cancel()
             return
         result = progress_callback_data.get(reply_identifier)
         if result:
             if message.chat.id not in ADMIN_CHATS and user_id != result[3]:
-                await message.reply_text('You did not start this leech.')
+                await message.reply_text('😅 You did not start this leech.')
             else:
                 stop_uploads.add(reply_identifier)
-                await message.reply_text('Cancelled!')
+                await message.reply_text('⛔ Cancelled!')
             return
         starter_id = upload_waits.get(reply_identifier)
         if starter_id:
             if message.chat.id not in ADMIN_CHATS and user_id != starter_id[0]:
-                await message.reply_text('You did not start this leech.')
+                await message.reply_text('😅 You did not start this leech.')
             else:
                 stop_uploads.add(reply_identifier)
-                await message.reply_text('Cancelled!')
+                await message.reply_text('⛔ Cancelled!')
             return
         gid = leech_statuses.get(reply_identifier)
     if not gid:
@@ -320,11 +320,11 @@ async def cancel_leech(client, message):
 <code>/cancel</code> <i>(as reply to status message)</i>''')
         return
     if message.chat.id not in ADMIN_CHATS and not is_gid_owner(user_id, gid):
-        await message.reply_text('You did not start this leech.')
+        await message.reply_text('😅 You did not start this leech.')
         return
     await aria2_remove(session, gid)
 
-help_dict['leech'] = ('Leech',
+help_dict['leech'] = ('🧲 Leech',
 '''<code>/torrent</code> <i>(as reply to a Torrent URL or file)</i>
 
 <code>/ziptorrent</code> <i>(as reply to a Torrent URL or File)</i>

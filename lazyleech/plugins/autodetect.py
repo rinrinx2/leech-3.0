@@ -55,7 +55,7 @@ async def autodetect_callback(client, callback_query):
     identifier = (message.chat.id, message.message_id)
     result = auto_detects.get(identifier)
     if not result:
-        await callback_query.answer('I can\'t get your message, please try again.', show_alert=True, cache_time=3600)
+        await callback_query.answer('❌ I can\'t get your message, please try again.', show_alert=True, cache_time=3600)
         return
     link, user_id, init_func = result
     if callback_query.from_user.id != user_id:
@@ -71,7 +71,7 @@ async def autodetect_callback(client, callback_query):
     start_leech = data in ('autodetect_individual', 'autodetect_zip', 'autodetect_file')
     if start_leech:
         if getattr(message.reply_to_message, 'empty', True):
-            await callback_query.answer('Don\'t delete your message!', show_alert=True)
+            await callback_query.answer('🥺 Don\'t delete your message!', show_alert=True)
             return
         if data == 'autodetect_zip':
             flags = (SendAsZipFlag,)

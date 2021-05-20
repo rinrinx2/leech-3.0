@@ -73,7 +73,7 @@ async def testwatermark(client, message):
             to_upload = file.name
         await message.reply_photo(to_upload)
 
-help_dict['watermark'] = ('Watermark',
+help_dict['watermark'] = ('© Watermark',
 '''<b>Set watermark</b>
 <code>/setwatermark</code>
 

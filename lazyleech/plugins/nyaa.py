@@ -34,11 +34,11 @@ async def return_search(query, page=1, sukebei=False):
                 if splitted.scheme == 'magnet' and splitted.query:
                     link = f'<code>{link}</code>'
                 newtext = f'''{a + 1}. {html.escape(i["title"])}
-<b>Link:</b> {link}
-<b>Size:</b> {i["nyaa_size"]}
-<b>Seeders:</b> {i["nyaa_seeders"]}
-<b>Leechers:</b> {i["nyaa_leechers"]}
-<b>Category:</b> {i["nyaa_category"]}\n\n'''
+<b>🔗 Link:</b> {link}
+<b>💾 Size:</b> {i["nyaa_size"]}
+<b>🌱 Seeders:</b> {i["nyaa_seeders"]}
+<b>🌍 Leechers:</b> {i["nyaa_leechers"]}
+<b>🎭 Category:</b> {i["nyaa_category"]}\n\n'''
                 futtext = text + newtext
                 if (a and not a % 10) or len((await parser.parse(futtext))['message']) > 4096:
                     results.append(text)
@@ -55,14 +55,14 @@ async def return_search(query, page=1, sukebei=False):
 
 message_info = dict()
 ignore = set()
-@Client.on_message(filters.command(['ts']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['nyaasearch']) & filters.chat(ALL_CHATS))
 async def nyaa_search(client, message):
     text = message.text.split(' ')
     text.pop(0)
     query = ' '.join(text)
     await init_search(client, message, query, False)
 
-@Client.on_message(filters.command(['sts']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['sukabeisearch']) & filters.chat(ALL_CHATS))
 async def nyaa_search_sukebei(client, message):
     text = message.text.split(' ')
     text.pop(0)
@@ -72,9 +72,9 @@ async def nyaa_search_sukebei(client, message):
 async def init_search(client, message, query, sukebei):
     result, pages, ttl = await return_search(query, sukebei=sukebei)
     if not result:
-        await message.reply_text('No results found')
+        await message.reply_text('🥺 No results found')
     else:
-        buttons = [InlineKeyboardButton(f'1/{pages}', 'nyaa_nop'), InlineKeyboardButton('Next', 'nyaa_next')]
+        buttons = [InlineKeyboardButton(f'1/{pages}', 'nyaa_nop'), InlineKeyboardButton('➡', 'nyaa_next')]
         if pages == 1:
             buttons.pop()
         reply = await message.reply_text(result, reply_markup=InlineKeyboardMarkup([
@@ -87,7 +87,7 @@ async def nyaa_nop(client, callback_query):
     await callback_query.answer(cache_time=3600)
 
 callback_lock = asyncio.Lock()
-@Client.on_callback_query(custom_filters.callback_data(['nyaa_back', 'nyaa_next']))
+@Client.on_callback_query(custom_filters.callback_data(['⬅', 'nyaa_next']))
 async def nyaa_callback(client, callback_query):
     message = callback_query.message
     message_identifier = (message.chat.id, message.message_id)
@@ -108,7 +108,7 @@ async def nyaa_callback(client, callback_query):
             current_page = pages
         ttl_ended = (time.time() - ttl) > 3600
         if ttl_ended:
-            text = getattr(message.text, 'html', 'Search expired')
+            text = getattr(message.text, 'html', '❌ Search expired')
         else:
             if callback_query.from_user.id != user_id:
                 await callback_query.answer('...no', cache_time=3600)
@@ -131,9 +131,9 @@ async def nyaa_callback(client, callback_query):
             ignore.add(message_identifier)
     await callback_query.answer()
 
-help_dict['nyaa'] = ('Nyaa.si',
+help_dict['nyaa'] = ('🔗 Nyaa.si',
 '''<b>Nyaa search</b>
-<code>/ts</code> <i>[search query]</i>
+<code>/nyaasearch</code> <i>[search query]</i>
 
 <b>Sukebei search search</b>
-<code>/sts</code> <i>[search query]</i>''')
+<code>/sukabeisearch</code> <i>[search query]</i>''')

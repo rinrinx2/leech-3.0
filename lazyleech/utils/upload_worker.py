@@ -79,16 +79,16 @@ async def _upload_worker(client, message, reply, torrent_info, user_id, flags):
                 files[filepath] = filename
         for filepath in natsorted(files):
             sent_files.extend(await _upload_file(client, message, reply, files[filepath], filepath, ForceDocumentFlag in flags))
-    text = 'Here your file:\n'
+    text = '👇 Here your file 👇\n\n'
     parser = pyrogram_html.HTML(client)
     quote = None
     first_index = None
     all_amount = 1
     for filename, filelink in sent_files:
         if filelink:
-            atext = f'- <a href="{filelink}">{html.escape(filename)}</a>'
+            atext = f'❋ <a href="{filelink}">{html.escape(filename)}</a>'
         else:
-            atext = f'- {html.escape(filename)} (empty)'
+            atext = f'❋ {html.escape(filename)} (empty)'
         atext += '\n'
         futtext = text + atext
         if all_amount > 100 or len((await parser.parse(futtext))['message']) > 4096:
@@ -102,11 +102,11 @@ async def _upload_worker(client, message, reply, torrent_info, user_id, flags):
         all_amount += 1
         text = futtext
     if not sent_files:
-        text = 'Here your file: None'
+        text = '👇 Here your file 👇: 🤷‍♂️ None'
     thing = await message.reply_text(text, quote=quote, disable_web_page_preview=True)
     if first_index is None:
         first_index = thing
-    asyncio.create_task(reply.edit_text(f'✅ Uploaded.\nHere your file: {first_index.link}', disable_web_page_preview=True))
+    asyncio.create_task(reply.edit_text(f'✅ Uploaded.\nHere your file 👉: {first_index.link}', disable_web_page_preview=True))
 
 async def _upload_file(client, message, reply, filename, filepath, force_document):
     if not os.path.getsize(filepath):
@@ -117,7 +117,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
     user_watermark = os.path.join(str(user_id), 'watermark.jpg')
     user_watermarked_thumbnail = os.path.join(str(user_id), 'watermarked_thumbnail.jpg')
     file_has_big = os.path.getsize(filepath) > 2097152000
-    upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\nwill started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
+    upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\n🔁 will started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
     upload_identifier = (upload_wait.chat.id, upload_wait.message_id)
     async with upload_tamper_lock:
         upload_waits[upload_identifier] = user_id, worker_identifier
@@ -153,7 +153,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
                     if a:
                         async with upload_tamper_lock:
                             upload_waits.pop(upload_identifier)
-                            upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\nwill started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
+                            upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\n🔁 will started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
                             upload_identifier = (upload_wait.chat.id, upload_wait.message_id)
                             upload_waits[upload_identifier] = user_id, worker_identifier
                         for _ in range(PROGRESS_UPDATE_DELAY):

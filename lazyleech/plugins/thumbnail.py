@@ -49,7 +49,7 @@ async def rmthumbnail(client, message):
             os.remove(path)
     await message.reply_text('🗑 Thumbnail cleared')
 
-help_dict['thumbnail'] = ('Thumbnail',
+help_dict['thumbnail'] = ('🖼 Thumbnail',
 '''<b>Set Thumbnail</b>
 <code>/thumbnail</code>
 
