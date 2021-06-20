@@ -1,10 +1,26 @@
+# lazyleech - Telegram bot primarily to leech from torrents and upload to Telegram
+# Copyright (c) 2021 lazyleech developers <theblankx protonmail com, meliodas_bot protonmail com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import tempfile
 from pyrogram import Client, filters
 from .. import ALL_CHATS, help_dict
 from ..utils.misc import convert_to_jpg, get_file_mimetype, watermark_photo
 
-@Client.on_message(filters.command(['thumbnail']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['thumbnail', 'savethumbnail', 'setthumbnail']) & filters.chat(ALL_CHATS))
 async def savethumbnail(client, message):
     reply = message.reply_to_message
     document = message.document
@@ -37,21 +53,25 @@ async def savethumbnail(client, message):
         watermarked_thumbnail = os.path.join(str(user_id), 'watermarked_thumbnail.jpg')
         if os.path.isfile(watermark):
             await watermark_photo(thumbnail_path, watermark, watermarked_thumbnail)
-        await message.reply_text('✅ Thumbnail set')
+        await message.reply_text('Thumbnail set')
     else:
-        await message.reply_text('❌ Cannot find thumbnail')
+        await message.reply_text('Cannot find thumbnail')
 
-@Client.on_message(filters.command(['removethumbnail']) & filters.chat(ALL_CHATS))
+@Client.on_message(filters.command(['clearthumbnail', 'rmthumbnail', 'delthumbnail', 'removethumbnail', 'deletethumbnail']) & filters.chat(ALL_CHATS))
 async def rmthumbnail(client, message):
     for path in ('thumbnail', 'watermarked_thumbnail'):
         path = os.path.join(str(message.from_user.id), f'{path}.jpg')
         if os.path.isfile(path):
             os.remove(path)
-    await message.reply_text('🗑 Thumbnail cleared')
+    await message.reply_text('Thumbnail cleared')
 
-help_dict['thumbnail'] = ('🖼 TIMG',
-'''<b>Set Thumbnail</b>
-<code>/thumbnail</code>
+help_dict['thumbnail'] = ('Thumbnail',
+'''/thumbnail <i>&lt;as reply to image or as a caption&gt;</i>
+/setthumbnail <i>&lt;as reply to image or as a caption&gt;</i>
+/savethumbnail <i>&lt;as reply to image or as a caption&gt;</i>
 
-<b>Remove Thumbnail</b>
-<code>/removethumbnail</code>''')
+/clearthumbnail
+/rmthumbnail
+/removethumbnail
+/delthumbnail
+/deletethumbnail''')

@@ -3,9 +3,12 @@ import time
 import json
 import shlex
 import asyncio
+import tempfile
 import mimetypes
 from decimal import Decimal
 from datetime import timedelta
+from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
+from .. import app, ADMIN_CHATS
 
 # https://stackoverflow.com/a/49361727
 def format_bytes(size):
@@ -58,10 +61,22 @@ async def split_files(filename, destination_dir, no_ffmpeg=False):
     stdout, _ = await proc.communicate()
     return shlex.split(' '.join([i[14:] for i in stdout.decode().strip().split('\n')]))
 
+video_duration_cache = dict()
+video_duration_lock = asyncio.Lock()
 async def get_video_info(filename):
     proc = await asyncio.create_subprocess_exec('ffprobe', '-print_format', 'json', '-show_format', '-show_streams', filename, stdout=asyncio.subprocess.PIPE)
     stdout, _ = await proc.communicate()
-    return json.loads(stdout)
+    js = json.loads(stdout)
+    if js.get('format'):
+        if 'duration' not in js['format']:
+            async with video_duration_lock:
+                if filename not in video_duration_cache:
+                    with tempfile.NamedTemporaryFile(suffix='.mkv') as tempf:
+                        proc = await asyncio.create_subprocess_exec('ffmpeg', '-y', '-i', filename, '-c', 'copy', tempf.name)
+                        await proc.communicate()
+                        video_duration_cache[filename] = (await get_video_info(tempf.name))['format']['duration']
+            js['format']['duration'] = video_duration_cache[filename]
+    return js
 
 async def generate_thumbnail(videopath, photopath):
     video_info = await get_video_info(videopath)
@@ -81,12 +96,12 @@ def return_progress_string(current, total):
         filled_length = int(10 * current // total)
     else:
         filled_length = 0
-    return '\n☁' + '★' * filled_length + '☆' * (10 - filled_length) + '☁'
+    return '[' + '█' * filled_length + ' ' * (10 - filled_length) + ']'
 
 # https://stackoverflow.com/a/852718
 # https://stackoverflow.com/a/775095
 def calculate_eta(current, total, start_time):
-    if not current:
+    if not current or not total:
         return '00:00:00'
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -99,3 +114,15 @@ def calculate_eta(current, total, start_time):
 async def watermark_photo(main, overlay, out):
     proc = await asyncio.create_subprocess_exec('ffmpeg', '-y', '-i', main, '-i', overlay, '-filter_complex', 'overlay=(main_w-overlay_w)/2:(main_h-overlay_h)', out)
     await proc.communicate()
+
+async def allow_admin_cancel(chat_id, user_id):
+    if chat_id in ADMIN_CHATS:
+        return True
+    for i in ADMIN_CHATS:
+        try:
+            await app.get_chat_member(i, user_id)
+        except UserNotParticipant:
+            pass
+        else:
+            return True
+    return False

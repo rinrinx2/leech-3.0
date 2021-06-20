@@ -1,3 +1,19 @@
+# lazyleech - Telegram bot primarily to leech from torrents and upload to Telegram
+# Copyright (c) 2021 lazyleech developers <theblankx protonmail com, meliodas_bot protonmail com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import html
 import time
@@ -12,6 +28,9 @@ from pyrogram.parser import html as pyrogram_html
 from .. import PROGRESS_UPDATE_DELAY, ADMIN_CHATS, preserved_logs, TESTMODE, SendAsZipFlag, ForceDocumentFlag
 from .misc import split_files, get_file_mimetype, format_bytes, get_video_info, generate_thumbnail, return_progress_string, calculate_eta, watermark_photo
 
+import psutil
+return next(psutil.process_iter(['name'])).info['name'] == 'ps-run'
+
 upload_queue = asyncio.Queue()
 upload_statuses = dict()
 upload_tamper_lock = asyncio.Lock()
@@ -21,12 +40,12 @@ async def upload_worker():
         try:
             message_identifier = (reply.chat.id, reply.message_id)
             if SendAsZipFlag not in flags:
-                asyncio.create_task(reply.edit_text('🥳 done download.\n📤 uploading...'))
+                asyncio.create_task(reply.edit_text('Download successful, uploading files...'))
             task = asyncio.create_task(_upload_worker(client, message, reply, torrent_info, user_id, flags))
             upload_statuses[message_identifier] = task, user_id
             await task
         except asyncio.CancelledError:
-            text = '⛔ Cancelled.'
+            text = 'Your leech has been cancelled.'
             await asyncio.gather(reply.edit_text(text), message.reply_text(text))
         except Exception as ex:
             preserved_logs.append((message, torrent_info, ex))
@@ -69,8 +88,8 @@ async def _upload_worker(client, message, reply, torrent_info, user_id, flags):
                 with zipfile.ZipFile(filepath, 'x') as zipf:
                     for file in torrent_info['files']:
                         zipf.write(file['path'], file['path'].replace(os.path.join(torrent_info['dir'], ''), '', 1))
-            await asyncio.gather(reply.edit_text('✅ done\n🔐 Zip files...'), client.loop.run_in_executor(None, _zip_files))
-            asyncio.create_task(reply.edit_text('✅ done\n📤 Upload file...'))
+            await asyncio.gather(reply.edit_text('Download successful, zipping files...'), client.loop.run_in_executor(None, _zip_files))
+            asyncio.create_task(reply.edit_text('Download successful, uploading files...'))
             files[filepath] = filename
         else:
             for file in torrent_info['files']:
@@ -79,16 +98,16 @@ async def _upload_worker(client, message, reply, torrent_info, user_id, flags):
                 files[filepath] = filename
         for filepath in natsorted(files):
             sent_files.extend(await _upload_file(client, message, reply, files[filepath], filepath, ForceDocumentFlag in flags))
-    text = '👇 Here your file 👇\n\n'
+    text = '✨ #Files:\n'
     parser = pyrogram_html.HTML(client)
     quote = None
     first_index = None
     all_amount = 1
     for filename, filelink in sent_files:
         if filelink:
-            atext = f'❋ <a href="{filelink}">{html.escape(filename)}</a>'
+            atext = f'- <a href="{filelink}">{html.escape(filename)}</a>'
         else:
-            atext = f'❋ {html.escape(filename)} (empty)'
+            atext = f'- {html.escape(filename)} (empty)'
         atext += '\n'
         futtext = text + atext
         if all_amount > 100 or len((await parser.parse(futtext))['message']) > 4096:
@@ -102,11 +121,11 @@ async def _upload_worker(client, message, reply, torrent_info, user_id, flags):
         all_amount += 1
         text = futtext
     if not sent_files:
-        text = '👇 Here your file 👇: 🤷‍♂️ None'
+        text = 'Files: None'
     thing = await message.reply_text(text, quote=quote, disable_web_page_preview=True)
     if first_index is None:
         first_index = thing
-    asyncio.create_task(reply.edit_text(f'✅ Uploaded.\nHere your file 👉: {first_index.link}', disable_web_page_preview=True))
+    asyncio.create_task(reply.edit_text(f'Download successful, files uploaded.\nFiles: {first_index.link}', disable_web_page_preview=True))
 
 async def _upload_file(client, message, reply, filename, filepath, force_document):
     if not os.path.getsize(filepath):
@@ -117,7 +136,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
     user_watermark = os.path.join(str(user_id), 'watermark.jpg')
     user_watermarked_thumbnail = os.path.join(str(user_id), 'watermarked_thumbnail.jpg')
     file_has_big = os.path.getsize(filepath) > 2097152000
-    upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\n🔁 will started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
+    upload_wait = await reply.reply_text(f'Upload of {html.escape(filename)} will start in {PROGRESS_UPDATE_DELAY}s')
     upload_identifier = (upload_wait.chat.id, upload_wait.message_id)
     async with upload_tamper_lock:
         upload_waits[upload_identifier] = user_id, worker_identifier
@@ -141,7 +160,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
             if upload_identifier in stop_uploads:
                 return sent_files
             if split_task and not split_task.done():
-                await upload_wait.edit_text(f'🔀 Spliting {html.escape(filename)}...')
+                await upload_wait.edit_text(f'Splitting {html.escape(filename)}...')
                 while not split_task.done():
                     if upload_identifier in stop_uploads:
                         return sent_files
@@ -153,7 +172,7 @@ async def _upload_file(client, message, reply, filename, filepath, force_documen
                     if a:
                         async with upload_tamper_lock:
                             upload_waits.pop(upload_identifier)
-                            upload_wait = await reply.reply_text(f'🔁 Upload: {html.escape(filename)}\n\n🔁 will started in <b>{PROGRESS_UPDATE_DELAY}</b> second')
+                            upload_wait = await reply.reply_text(f'Upload of {html.escape(filename)} will start in {PROGRESS_UPDATE_DELAY}s')
                             upload_identifier = (upload_wait.chat.id, upload_wait.message_id)
                             upload_waits[upload_identifier] = user_id, worker_identifier
                         for _ in range(PROGRESS_UPDATE_DELAY):
@@ -234,13 +253,8 @@ async def progress_callback(current, total, client, reply, filename, user_id):
             upload_speed = format_bytes((total - current) / (time.time() - start_time))
         else:
             upload_speed = '0 B'
-        text = f'''📤 Uploading: {html.escape(filename)}
-<code>{html.escape(return_progress_string(current, total))}</code>
-
-<b>📦 Size :</b> <code>{format_bytes(total)}</code>
-<b>📤 Uploaded :</b> <code>{format_bytes(current)}</code>
-<b>⚡ Speed :</b> <code>{upload_speed}/s</code>
-<b>⏱️ ETA :</b> <code>{calculate_eta(current, total, start_time)}</code>'''
+        text = f'''<b>Uploading</b> <code>{html.escape(filename)}</code>
+<code>{html.escape(return_progress_string(current, total))}</code> {format_bytes(current)} of {format_bytes(total)} at {upload_speed}/s, ETA: {calculate_eta(current, total, start_time)}'''
         if prevtext != text:
             await reply.edit_text(text)
             prevtext = text
